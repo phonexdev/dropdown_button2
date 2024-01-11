@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import 'modal_barrier_esthe.dart';
+
 part 'dropdown_button2_data.dart';
 
 part 'enums.dart';
@@ -572,7 +574,7 @@ class _MenuLimits {
   final double scrollOffset;
 }
 
-class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
+class _DropdownRoute<T> extends PopupRouteEsthe<_DropdownRouteResult<T>> {
   _DropdownRoute({
     required this.items,
     required this.buttonRect,
@@ -1867,5 +1869,59 @@ class _DropdownButtonFormFieldState<T> extends FormFieldState<T> {
     if (oldWidget.initialValue != widget.initialValue) {
       setValue(widget.initialValue);
     }
+  }
+}
+
+abstract class PopupRouteEsthe<T> extends ModalRoute<T> {
+  /// Initializes the [PopupRoute].
+  PopupRouteEsthe({
+    super.settings,
+    super.filter,
+    super.traversalEdgeBehavior,
+  });
+
+  @override
+  bool get opaque => false;
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  bool get allowSnapshotting => false;
+
+  @override
+  Widget buildModalBarrier() {
+    Widget barrier;
+    if (barrierColor != null && barrierColor!.alpha != 0 && !offstage) {
+      // changedInternalState is called if barrierColor or offstage updates
+      assert(barrierColor != barrierColor!.withOpacity(0.0));
+      final Animation<Color?> color = animation!.drive(
+        ColorTween(
+          begin: barrierColor!.withOpacity(0.0),
+          end:
+              barrierColor, // changedInternalState is called if barrierColor updates
+        ).chain(CurveTween(
+            curve:
+                barrierCurve)), // changedInternalState is called if barrierCurve updates
+      );
+      barrier = AnimatedModalBarrierEsthe(
+        color: color,
+        dismissible:
+            barrierDismissible, // changedInternalState is called if barrierDismissible updates
+        semanticsLabel:
+            barrierLabel, // changedInternalState is called if barrierLabel updates
+        barrierSemanticsDismissible: semanticsDismissible,
+      );
+    } else {
+      barrier = ModalBarrierEsthe(
+        dismissible:
+            barrierDismissible, // changedInternalState is called if barrierDismissible updates
+        semanticsLabel:
+            barrierLabel, // changedInternalState is called if barrierLabel updates
+        barrierSemanticsDismissible: semanticsDismissible,
+      );
+    }
+
+    return barrier;
   }
 }
